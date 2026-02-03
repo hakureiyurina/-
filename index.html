@@ -3,171 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyTube Drive Edition</title>
+    <title>MyTube Final</title>
     <style>
-        /* デザイン：YouTubeダークモード風 */
-        body { background-color: #0f0f0f; color: white; margin: 0; font-family: "Roboto", Arial, sans-serif; }
-        header { background-color: #0f0f0f; padding: 10px 20px; position: sticky; top: 0; border-bottom: 1px solid #333; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-        .logo { color: #ff0000; font-size: 24px; font-weight: bold; text-decoration: none; }
-        
-        .container { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; max-width: 1400px; margin: 0 auto; }
-
-        /* メインプレイヤー */
-        .main-content video { width: 100%; aspect-ratio: 16/9; background: black; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .video-info { margin-top: 15px; }
-        .video-info h2 { margin: 0; font-size: 20px; }
-
-        /* アップロードエリア */
-        .upload-section { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
-        .upload-section strong { display: block; margin-bottom: 10px; color: #aaa; }
-        .upload-section input, .upload-section button { margin: 8px 0; display: block; width: 100%; box-sizing: border-box; }
-        .upload-section input[type="text"] { padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; }
-        .upload-section button { background: #cc0000; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .upload-section button:hover { background: #ff0000; }
-        .upload-section button:disabled { background: #555; cursor: not-allowed; }
-
-        /* サイドバー（プレイリスト） */
-        .sidebar { display: flex; flex-direction: column; gap: 12px; }
-        .video-item { display: flex; gap: 10px; cursor: pointer; transition: 0.2s; padding: 5px; border-radius: 8px; }
-        .video-item:hover { background: #2a2a2a; }
-        .thumbnail { width: 160px; height: 90px; background: #333; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; overflow: hidden; }
-        .video-details h4 { margin: 0; font-size: 14px; line-height: 1.2; color: #fff; }
-
-        @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; }
-            .sidebar { margin-top: 20px; }
-        }
+        body { background-color: #0f0f0f; color: white; margin: 0; font-family: sans-serif; }
+        header { background-color: #0f0f0f; padding: 10px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: #ff0000; font-size: 24px; font-weight: bold; }
+        .container { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; }
+        video { width: 100%; aspect-ratio: 16/9; background: black; border-radius: 12px; }
+        .upload-section { background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; }
+        input, button { display: block; width: 100%; margin: 10px 0; padding: 10px; box-sizing: border-box; }
+        button { background: #cc0000; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:active { background: #ff0000; transform: scale(0.98); }
+        .video-item { display: flex; gap: 10px; cursor: pointer; padding: 10px; border-radius: 8px; background: #1a1a1a; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
     <header>
-        <a href="#" class="logo">MyTube <span style="font-size: 12px; color: #aaa;">Drive API</span></a>
-        <div id="status" style="font-size: 12px; color: #00b894;">API Ready</div>
+        <div class="logo">MyTube</div>
+        <div id="status" style="font-size: 12px; color: #f1c40f;">システム準備中...</div>
     </header>
 
     <div class="container">
         <div class="main-content">
-            <video id="mainPlayer" controls>
-                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-            </video>
-            <div class="video-info">
-                <h2 id="currentTitle">サンプル動画 (Big Buck Bunny)</h2>
-                <p style="color: #aaa; font-size: 14px;">Google Drive Storage Connection</p>
-            </div>
+            <video id="mainPlayer" controls autoplay></video>
+            <h2 id="currentTitle">動画を選択してください</h2>
         </div>
-
         <div class="sidebar">
             <div class="upload-section">
                 <strong>Googleドライブに保存</strong>
                 <input type="file" id="fileInput" accept="video/*">
                 <input type="text" id="titleInput" placeholder="動画のタイトル">
                 <button id="uploadBtn">アップロード開始</button>
-                <p id="loadingMsg" style="display:none; font-size:12px; color:#f1c40f; text-align:center;">アップロード中...少々お待ちください</p>
+                <p id="loadingMsg" style="display:none; text-align:center; color:#f1c40f; font-size:12px;"></p>
             </div>
-            
-            <div id="playlist">
-                </div>
+            <div id="playlist"></div>
         </div>
     </div>
 
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gsiLoaded()"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
 
     <script>
-// --- 1. 設定情報 ---
-        const CLIENT_ID = '608274366128-81rjc0e64h0qkj9rv80peeidjioe421.apps.googleusercontent.com';
-        const API_KEY = 'AQ.Ab8RN6LpPVy9Og3toEtqRzt1h5dGXaTa78fnVGyy5Bn7tyxJvQ'; // ※ここにご自身のAPIキーを正確に入れてください
-        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const CLIENT_ID = '608274366128-81rjc0e64h0qkj9rv80peeid0jioe421.apps.googleusercontent.com';
+        const API_KEY = 'AQ.Ab8RN6LpPVy9Og3toEtqRzt1h5dGXaTa78fnVGyy5Bn7tyxJvQ';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
         let tokenClient;
-        let gapiInited = false;
-        let gsiInited = false;
 
-        const player = document.getElementById('mainPlayer');
-        const playlist = document.getElementById('playlist');
-        const currentTitle = document.getElementById('currentTitle');
-        const fileInput = document.getElementById('fileInput');
-        const titleInput = document.getElementById('titleInput');
-        const uploadBtn = document.getElementById('uploadBtn'); // IDが一致しているか
-
-        function gapiLoaded() {
+        // 起動時に自動でAPIを準備する
+        window.onload = () => {
             gapi.load('client', async () => {
-                await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-                gapiInited = true;
+                await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+                document.getElementById('status').innerText = "準備完了！";
+                document.getElementById('status').style.color = "#00b894";
             });
-        }
 
-        function gsiLoaded() {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
-                callback: '', 
+                callback: '',
             });
-            gsiInited = true;
-        }
+        };
 
-        // リストに追加する大事な関数
-        function addVideoToList(title, url) {
-            const item = document.createElement('div');
-            item.className = 'video-item';
-            item.innerHTML = `
-                <div class="thumbnail" style="background:#333; display:flex; align-items:center; justify-content:center;">DRIVE</div>
-                <div class="video-details">
-                    <h4>${title}</h4>
-                    <p style="font-size: 12px; color: #aaa; margin: 4px 0 0;">Cloud Storage</p>
-                </div>
-            `;
-            item.onclick = () => {
-                player.src = url;
-                currentTitle.innerText = title;
-                player.play();
-            };
-            playlist.prepend(item);
-        }
-
-async function uploadToDrive(file, title) {
-            uploadBtn.disabled = true;
-            loadingMsg.style.display = 'block';
-            loadingMsg.innerText = "認証中...";
+        async function uploadToDrive(file, title) {
+            const msg = document.getElementById('loadingMsg');
+            msg.style.display = 'block';
+            msg.innerText = "Googleに接続中...";
 
             tokenClient.callback = async (response) => {
                 if (response.error) {
-                    alert("認証エラー: " + response.error);
-                    resetUI();
+                    msg.innerText = "認証に失敗しました";
                     return;
                 }
-
-                loadingMsg.innerText = "ドライブに送信中...";
+                msg.innerText = "送信中...";
                 try {
                     const metadata = { name: title, mimeType: file.type };
                     const form = new FormData();
                     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                     form.append('file', file);
 
-                    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+                    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
                         method: 'POST',
-                        headers: new Headers({ 'Authorization': 'Bearer ' + response.access_token }),
+                        headers: { 'Authorization': 'Bearer ' + response.access_token },
                         body: form
                     });
-
-                    if (!res.ok) throw new Error("アップロードに失敗しました");
-
                     const fileData = await res.json();
-                    
-                    // 【重要】ドライブの動画を再生するためのURLを正しく生成
+
+                    // 公開設定
+                    await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}/permissions`, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + response.access_token, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: 'reader', type: 'anyone' })
+                    });
+
                     const videoUrl = `https://www.googleapis.com/drive/v3/files/${fileData.id}?alt=media&key=${API_KEY}`;
                     
-                    // 即座にリストへ追加する
-                    addVideoToList(title, videoUrl);
-                    
-                    alert('アップロード完了！リストに表示されました。');
+                    // リストに追加
+                    const item = document.createElement('div');
+                    item.className = 'video-item';
+                    item.innerHTML = `<div><h4>${title}</h4></div>`;
+                    item.onclick = () => {
+                        document.getElementById('mainPlayer').src = videoUrl;
+                        document.getElementById('currentTitle').innerText = title;
+                    };
+                    document.getElementById('playlist').prepend(item);
+
+                    msg.innerText = "成功！";
                 } catch (err) {
-                    alert("エラー: " + err.message);
-                } finally {
-                    resetUI();
+                    msg.innerText = "エラー: " + err.message;
                 }
             };
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
+
+        document.getElementById('uploadBtn').onclick = () => {
+            const file = document.getElementById('fileInput').files[0];
+            const title = document.getElementById('titleInput').value;
+            if (file && title) {
+                uploadToDrive(file, title);
+            } else {
+                alert("ファイルとタイトルを入れてください");
+            }
+        };
+    </script>
+</body>
+</html>
