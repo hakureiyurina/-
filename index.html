@@ -21,4 +21,112 @@
         .upload-section { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed #444; }
         .upload-section input, .upload-section button { margin: 5px 0; display: block; width: 100%; box-sizing: border-box; }
         .upload-section input[type="text"] { padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; }
-        .upload-section button { background: #cc0000; color: white; border: none; padding: 10px; border
+        .upload-section button { background: #cc0000; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .upload-section button:hover { background: #ff0000; }
+
+        /* サイドバー（プレイリスト） */
+        .sidebar { display: flex; flex-direction: column; gap: 12px; }
+        .video-item { display: flex; gap: 10px; cursor: pointer; transition: 0.2s; padding: 5px; border-radius: 8px; }
+        .video-item:hover { background: #2a2a2a; }
+        .thumbnail { width: 160px; height: 90px; background: #333; border-radius: 8px; flex-shrink: 0; object-fit: cover; }
+        .video-details h4 { margin: 0; font-size: 14px; line-height: 1.2; }
+
+        /* レスポンシブ設定（スマホで見るとき） */
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+            .sidebar { margin-top: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">MyTube</a>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <video id="mainPlayer" controls poster="https://via.placeholder.com/800x450?text=Select+Video">
+                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+            </video>
+            <div class="video-info">
+                <h2 id="currentTitle">Big Buck Bunny (Sample)</h2>
+                <p style="color: #aaa; font-size: 14px;">1.2M views • 2026/02/03</p>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="upload-section">
+                <strong>動画を投稿する</strong>
+                <input type="file" id="fileInput" accept="video/*">
+                <input type="text" id="titleInput" placeholder="タイトルを入力">
+                <button id="uploadBtn">アップロード</button>
+            </div>
+            
+            <div id="playlist">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const player = document.getElementById('mainPlayer');
+        const playlist = document.getElementById('playlist');
+        const currentTitle = document.getElementById('currentTitle');
+        const fileInput = document.getElementById('fileInput');
+        const titleInput = document.getElementById('titleInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        // 動画リストにアイテムを追加する関数
+        function addVideoToList(title, url) {
+            const item = document.createElement('div');
+            item.className = 'video-item';
+            
+            // サムネイルの代わりに、小さなビデオ要素かグレーの箱を表示
+            item.innerHTML = `
+                <div class="thumbnail" style="display: flex; align-items: center; justify-content: center; background: #333; color: #666; font-size: 10px;">
+                    NO IMAGE
+                </div>
+                <div class="video-details">
+                    <h4>${title}</h4>
+                    <p style="font-size: 12px; color: #aaa; margin: 4px 0 0;">Uploaded User</p>
+                </div>
+            `;
+            
+            // クリックイベント
+            item.onclick = () => {
+                player.src = url;
+                currentTitle.innerText = title;
+                player.play();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+            
+            playlist.prepend(item); // 新しい順に上に追加
+        }
+
+        // アップロードボタンの処理
+        uploadBtn.onclick = () => {
+            const file = fileInput.files[0];
+            const title = titleInput.value;
+
+            if (!file || !title) {
+                alert('動画ファイルとタイトルの両方を入力してください');
+                return;
+            }
+
+            // ローカルファイルのURLを作成
+            const videoUrl = URL.createObjectURL(file);
+            
+            // リストに追加
+            addVideoToList(title, videoUrl);
+
+            // 入力欄クリア
+            titleInput.value = '';
+            fileInput.value = '';
+        };
+
+        // 初期サンプルの追加
+        addVideoToList("サンプル動画 1", "https://www.w3schools.com/html/mov_bbb.mp4");
+        addVideoToList("サンプル動画 2", "https://www.w3schools.com/html/movie.mp4");
+    </script>
+</body>
+</html>
