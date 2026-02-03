@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background-color: #0f0f0f; color: white; margin: 0; font-family: sans-serif; }
+        /* グリッドレイアウトで左右に分ける */
+        .container { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; }
+        
+        /* メイン動画エリア */
+        .main-content video { width: 100%; aspect-ratio: 16/9; background: black; }
+        
+        /* 右側の動画リスト */
+        .sidebar { display: flex; flex-direction: column; gap: 10px; }
+        .video-item { display: flex; gap: 10px; cursor: pointer; }
+        .thumbnail { width: 120px; height: 68px; background: #333; flex-shrink: 0; }
+        .video-info h4 { margin: 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <video id="player" controls autoplay>
+                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+            </video>
+            <h2 id="videoTitle">Big Buck Bunny (Sample 1)</h2>
+        </div>
+
+        <div class="sidebar" id="playlist">
+            </div>
+    </div>
+
+    <script>
+        // 動画データのリスト（本来はデータベースから取るもの）
+        const videos = [
+            { title: "Sample Video 1", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
+            { title: "Sample Video 2", url: "https://www.w3schools.com/html/movie.mp4" }
+        ];
+
+        const player = document.getElementById('player');
+        const playlist = document.getElementById('playlist');
+        const videoTitle = document.getElementById('videoTitle');
+
+        // リストを画面に表示するJS
+        videos.forEach(video => {
+            const item = document.createElement('div');
+            item.className = 'video-item';
+            item.innerHTML = `<div class="thumbnail"></div><div><h4>${video.title}</h4></div>`;
+            
+            // クリックしたら動画を切り替える
+            item.onclick = () => {
+                player.src = video.url;
+                videoTitle.innerText = video.title;
+                player.play();
+            };
+            playlist.appendChild(item);
+        });
+    </script>
+</body>
+</html>
