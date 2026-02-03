@@ -17,6 +17,37 @@
         .video-item { display: flex; gap: 10px; cursor: pointer; padding: 10px; border-radius: 8px; background: #1a1a1a; margin-bottom: 5px; }
     </style>
 </head>
+    <script>
+    const menuItems = document.querySelectorAll('ul li');
+    let currentIndex = 0;
+
+    // 初期選択状態の設定
+    function updateMenu() {
+        menuItems.forEach((item, index) => {
+            if (index === currentIndex) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    // キーボード入力の検知
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp') { // 上キー
+            currentIndex = (currentIndex > 0) ? currentIndex - 1 : menuItems.length - 1;
+            updateMenu();
+        } else if (e.key === 'ArrowDown') { // 下キー
+            currentIndex = (currentIndex < menuItems.length - 1) ? currentIndex + 1 : 0;
+            updateMenu();
+        } else if (e.key === 'Enter' || e.key === 'z') { // 決定（Enter or Z）
+            alert(menuItems[currentIndex].innerText + " を選択しました！");
+        }
+    });
+
+    // 初期化
+    updateMenu();
+</script>
 <body>
 
     <header>
