@@ -73,11 +73,10 @@
 
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gsiLoaded()"></script>
-
-    <script>
-// --- 1. 設定情報 ---
-        const CLIENT_ID = '608274366128-81rjc0e64h0qkj9rv80peeid0jioe42l.apps.googleusercontent.com';
-        const API_KEY = 'AQ.Ab8RN6LpPVy9Og3toEtqRzt1h5dGXaTa78fnVGyy5Bn7tyxJvQ'; // ※ここにご自身のAPIキーを正確に入れてください
+<script>
+        // --- 1. 設定情報 ---
+        const CLIENT_ID = '608274366128-81rjc0e64h0qkj9rv80peeid0jioe421.apps.googleusercontent.com';
+        const API_KEY = 'AQ.Ab8RN6LpPVy9Og3toEtqRzt1h5dGXaTa78fnVGyy5Bn7tyxJvQ'; 
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
@@ -91,6 +90,7 @@
         const fileInput = document.getElementById('fileInput');
         const titleInput = document.getElementById('titleInput');
         const uploadBtn = document.getElementById('uploadBtn');
+        const loadingMsg = document.getElementById('loadingMsg'); // これが必要！
 
         function gapiLoaded() {
             gapi.load('client', async () => {
@@ -108,7 +108,6 @@
             gsiInited = true;
         }
 
-        // リストに追加する大事な関数
         function addVideoToList(title, url) {
             const item = document.createElement('div');
             item.className = 'video-item';
@@ -127,22 +126,48 @@
             playlist.prepend(item);
         }
 
+        // --- ここからが「エラー表示付き」の新しい関数 ---
         async function uploadToDrive(file, title) {
-            tokenClient.callback = async (response) => {
-                const metadata = { name: title, mimeType: file.type };
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', file);
+            loadingMsg.style.display = 'block';
+            loadingMsg.style.color = '#f1c40f';
+            loadingMsg.innerText = "認証中...";
 
-                const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
-                    method: 'POST',
-                    headers: new Headers({ 'Authorization': 'Bearer ' + response.access_token }),
-                    body: form
-                });
-                const fileData = await res.json();
-                const videoUrl = `https://www.googleapis.com/drive/v3/files/${fileData.id}?alt=media&key=${API_KEY}`;
-                addVideoToList(title, videoUrl);
-                alert('アップロード完了！');
+            tokenClient.callback = async (response) => {
+                if (response.error !== undefined) {
+                    loadingMsg.style.color = 'red';
+                    loadingMsg.innerText = "認証エラー: " + response.error;
+                    return;
+                }
+
+                loadingMsg.innerText = "ファイルを送信中...";
+                try {
+                    const metadata = { name: title, mimeType: file.type };
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', file);
+
+                    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+                        method: 'POST',
+                        headers: new Headers({ 'Authorization': 'Bearer ' + response.access_token }),
+                        body: form
+                    });
+
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        throw new Error(JSON.stringify(errorData));
+                    }
+
+                    const fileData = await res.json();
+                    const videoUrl = `https://www.googleapis.com/drive/v3/files/${fileData.id}?alt=media&key=${API_KEY}`;
+                    addVideoToList(title, videoUrl);
+                    
+                    loadingMsg.style.color = '#00b894';
+                    loadingMsg.innerText = "完了しました！";
+                    alert('アップロード完了！');
+                } catch (err) {
+                    loadingMsg.style.color = 'red';
+                    loadingMsg.innerText = "送信エラー: " + err.message;
+                }
             };
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
@@ -155,8 +180,5 @@
             }
         };
 
-        // 【ここが重要！】ページを開いた時にサンプルを表示する
         addVideoToList("サンプル動画 (Big Buck Bunny)", "https://www.w3schools.com/html/mov_bbb.mp4");
-        </script>
-</body>
-</html>
+    </script>
