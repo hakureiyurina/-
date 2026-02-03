@@ -13,7 +13,6 @@
         .upload-section { background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; }
         input, button { display: block; width: 100%; margin: 10px 0; padding: 10px; box-sizing: border-box; }
         button { background: #cc0000; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        #loadingMsg { font-size: 14px; font-weight: bold; margin-top: 10px; text-align: center; }
         .video-item { display: flex; gap: 10px; cursor: pointer; padding: 10px; border-radius: 8px; }
         .video-item:hover { background: #2a2a2a; }
         .thumbnail { width: 120px; height: 68px; background: #333; border-radius: 8px; flex-shrink: 0; }
@@ -36,7 +35,6 @@
                 <input type="file" id="fileInput" accept="video/*">
                 <input type="text" id="titleInput" placeholder="動画のタイトル">
                 <button id="uploadBtn">アップロード開始</button>
-                <p id="loadingMsg" style="display:none;"></p>
             </div>
             <div id="playlist"></div>
         </div>
@@ -46,7 +44,7 @@
     <script async defer src="https://accounts.google.com/gsi/client" onload="gsiLoaded()"></script>
 
     <script>
-        // --- 設定情報（慎重に貼り付けてください） ---
+        // 設定情報
         const CLIENT_ID = '608274366128-81rjc0e64h0qkj9rv80peeid0jioe421.apps.googleusercontent.com'; 
         const API_KEY = 'AQ.Ab8RN6LpPVy9Og3toEtqRzt1h5dGXaTa78fnVGyy5Bn7tyxJvQ'; 
 
@@ -82,54 +80,16 @@
         }
 
         async function uploadToDrive(file, title) {
-            const msg = document.getElementById('loadingMsg');
-            msg.style.display = 'block';
-            msg.style.color = '#f1c40f';
-            msg.innerText = "認証中...";
-
             tokenClient.callback = async (response) => {
-                if (response.error) {
-                    msg.style.color = 'red';
-                    msg.innerText = "認証エラー: " + response.error;
-                    return;
-                }
-                msg.innerText = "送信中...";
-                try {
-                    const metadata = { name: title, mimeType: file.type };
-                    const form = new FormData();
-                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    form.append('file', file);
+                const metadata = { name: title, mimeType: file.type };
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', file);
 
-                    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
-                        method: 'POST',
-                        headers: new Headers({ 'Authorization': 'Bearer ' + response.access_token }),
-                        body: form
-                    });
+                const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': 'Bearer ' + response.access_token }),
+                    body: form
+                });
 
-                    if (!res.ok) throw new Error("アップロード失敗");
-                    const fileData = await res.json();
-                    
-                    // API_KEYを末尾に付与して直リンクを作成
-                    const videoUrl = `https://www.googleapis.com/drive/v3/files/${fileData.id}?alt=media&key=${API_KEY}`;
-                    addVideoToList(title, videoUrl);
-                    msg.style.color = '#00b894';
-                    msg.innerText = "成功！";
-                } catch (err) {
-                    msg.style.color = 'red';
-                    msg.innerText = "エラー: " + err.message;
-                }
-            };
-            tokenClient.requestAccessToken({ prompt: 'consent' });
-        }
-
-        document.getElementById('uploadBtn').onclick = () => {
-            const file = document.getElementById('fileInput').files[0];
-            const title = document.getElementById('titleInput').value;
-            if (file && title) uploadToDrive(file, title);
-            else alert("ファイルとタイトルを入力してください");
-        };
-
-        addVideoToList("サンプル動画", "https://www.w3schools.com/html/mov_bbb.mp4");
-    </script>
-</body>
-</html>
+                const fileData = await res.
