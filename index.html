@@ -127,36 +127,47 @@
             playlist.prepend(item);
         }
 
-        async function uploadToDrive(file, title) {
-            tokenClient.callback = async (response) => {
-                const metadata = { name: title, mimeType: file.type };
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', file);
+async function uploadToDrive(file, title) {
+            uploadBtn.disabled = true;
+            loadingMsg.style.display = 'block';
+            loadingMsg.innerText = "認証中...";
 
-                const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
-                    method: 'POST',
-                    headers: new Headers({ 'Authorization': 'Bearer ' + response.access_token }),
-                    body: form
-                });
-                const fileData = await res.json();
-                const videoUrl = `https://www.googleapis.com/drive/v3/files/${fileData.id}?alt=media&key=${API_KEY}`;
-                addVideoToList(title, videoUrl);
-                alert('アップロード完了！');
+            tokenClient.callback = async (response) => {
+                if (response.error) {
+                    alert("認証エラー: " + response.error);
+                    resetUI();
+                    return;
+                }
+
+                loadingMsg.innerText = "ドライブに送信中...";
+                try {
+                    const metadata = { name: title, mimeType: file.type };
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', file);
+
+                    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+                        method: 'POST',
+                        headers: new Headers({ 'Authorization': 'Bearer ' + response.access_token }),
+                        body: form
+                    });
+
+                    if (!res.ok) throw new Error("アップロードに失敗しました");
+
+                    const fileData = await res.json();
+                    
+                    // 【重要】ドライブの動画を再生するためのURLを正しく生成
+                    const videoUrl = `https://www.googleapis.com/drive/v3/files/${fileData.id}?alt=media&key=${API_KEY}`;
+                    
+                    // 即座にリストへ追加する
+                    addVideoToList(title, videoUrl);
+                    
+                    alert('アップロード完了！リストに表示されました。');
+                } catch (err) {
+                    alert("エラー: " + err.message);
+                } finally {
+                    resetUI();
+                }
             };
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
-
-        uploadBtn.onclick = () => {
-            const file = fileInput.files[0];
-            const title = titleInput.value;
-            if (file && title) {
-                uploadToDrive(file, title);
-            }
-        };
-
-        // 【ここが重要！】ページを開いた時にサンプルを表示する
-        addVideoToList("サンプル動画 (Big Buck Bunny)", "https://www.w3schools.com/html/mov_bbb.mp4");
-        </script>
-</body>
-</html>
