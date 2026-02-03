@@ -5,53 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyTube Drive Edition</title>
     <style>
-        /* デザイン：YouTubeダークモード風 */
-        body { background-color: #0f0f0f; color: white; margin: 0; font-family: "Roboto", Arial, sans-serif; }
-        header { background-color: #0f0f0f; padding: 10px 20px; position: sticky; top: 0; border-bottom: 1px solid #333; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        body { background-color: #0f0f0f; color: white; margin: 0; font-family: sans-serif; }
+        header { background-color: #0f0f0f; padding: 10px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
         .logo { color: #ff0000; font-size: 24px; font-weight: bold; text-decoration: none; }
-        
-        .container { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; max-width: 1400px; margin: 0 auto; }
-
-        /* メインプレイヤー */
-        .main-content video { width: 100%; aspect-ratio: 16/9; background: black; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .video-info { margin-top: 15px; }
-        .video-info h2 { margin: 0; font-size: 20px; }
-
-        /* アップロードエリア */
-        .upload-section { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
-        .upload-section strong { display: block; margin-bottom: 10px; color: #aaa; }
-        .upload-section input, .upload-section button { margin: 8px 0; display: block; width: 100%; box-sizing: border-box; }
-        .upload-section input[type="text"] { padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; }
-        .upload-section button { background: #cc0000; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .upload-section button:hover { background: #ff0000; }
-
-        /* サイドバー（プレイリスト） */
-        .sidebar { display: flex; flex-direction: column; gap: 12px; }
-        .video-item { display: flex; gap: 10px; cursor: pointer; transition: 0.2s; padding: 5px; border-radius: 8px; }
+        .container { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; }
+        video { width: 100%; aspect-ratio: 16/9; background: black; border-radius: 12px; }
+        .upload-section { background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; }
+        input, button { display: block; width: 100%; margin: 10px 0; padding: 10px; box-sizing: border-box; }
+        button { background: #cc0000; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .video-item { display: flex; gap: 10px; cursor: pointer; padding: 10px; border-radius: 8px; }
         .video-item:hover { background: #2a2a2a; }
-        .thumbnail { width: 160px; height: 90px; background: #333; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; overflow: hidden; }
-        .video-details h4 { margin: 0; font-size: 14px; line-height: 1.2; color: #fff; }
-
-        @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; }
-            .sidebar { margin-top: 20px; }
-        }
+        .thumbnail { width: 120px; height: 68px; background: #333; border-radius: 8px; flex-shrink: 0; }
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <header>
-        <a href="#" class="logo">MyTube <span style="font-size: 12px; color: #aaa;">Drive API</span></a>
+        <a href="#" class="logo">MyTube</a>
         <div id="status" style="font-size: 12px; color: #00b894;">API Ready</div>
     </header>
 
     <div class="container">
         <div class="main-content">
             <video id="mainPlayer" controls></video>
-            <div class="video-info">
-                <h2 id="currentTitle">動画を選択してください</h2>
-                <p style="color: #aaa; font-size: 14px;">Google Drive Storage Connection</p>
-            </div>
+            <h2 id="currentTitle">動画を選択してください</h2>
         </div>
 
         <div class="sidebar">
@@ -62,7 +40,6 @@
                 <button id="uploadBtn">アップロード開始</button>
                 <p id="loadingMsg" style="display:none; font-size:12px; color:#f1c40f; text-align:center;">準備中...</p>
             </div>
-            
             <div id="playlist"></div>
         </div>
     </div>
@@ -71,28 +48,18 @@
     <script async defer src="https://accounts.google.com/gsi/client" onload="gsiLoaded()"></script>
 
     <script>
-        // --- 1. 設定情報 (スペースがないか最終チェック済み) ---
-        const CLIENT_ID = '608274366128-81rjc0e64h0qkj9rv80peeid0jioe421.apps.googleusercontent.com';
-        const API_KEY = 'AQ.Ab8RN6LpPVy9Og3toEtqRzt1h5dGXaTa78fnVGyy5Bn7tyxJvQ'; 
+        // 【重要】ここを Cloud Console の「クライアント ID」と「API キー」に正確に書き換えてください
+        const CLIENT_ID = '608274366128-81rjc0e64h0qkj9rv80peeid0jioe421.apps.googleusercontent.com'; 
+        const API_KEY = 'AQ.Ab8RN6LpPVy90g3toEtqRzt1h5dGXaTa78fnVGyy5Bn7tyxJvQ'; 
+
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
         let tokenClient;
-        let gapiInited = false;
-        let gsiInited = false;
-
-        const player = document.getElementById('mainPlayer');
-        const playlist = document.getElementById('playlist');
-        const currentTitle = document.getElementById('currentTitle');
-        const fileInput = document.getElementById('fileInput');
-        const titleInput = document.getElementById('titleInput');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const loadingMsg = document.getElementById('loadingMsg');
 
         function gapiLoaded() {
             gapi.load('client', async () => {
                 await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-                gapiInited = true;
             });
         }
 
@@ -102,41 +69,33 @@
                 scope: SCOPES,
                 callback: '', 
             });
-            gsiInited = true;
         }
 
         function addVideoToList(title, url) {
             const item = document.createElement('div');
             item.className = 'video-item';
-            item.innerHTML = `
-                <div class="thumbnail" style="background:#333; display:flex; align-items:center; justify-content:center;">DRIVE</div>
-                <div class="video-details">
-                    <h4>${title}</h4>
-                    <p style="font-size: 12px; color: #aaa; margin: 4px 0 0;">Cloud Storage</p>
-                </div>
-            `;
+            item.innerHTML = `<div class="thumbnail"></div><div><h4>${title}</h4></div>`;
             item.onclick = () => {
-                player.src = url;
-                currentTitle.innerText = title;
-                player.play();
+                document.getElementById('mainPlayer').src = url;
+                document.getElementById('currentTitle').innerText = title;
             };
-            playlist.prepend(item);
+            document.getElementById('playlist').prepend(item);
         }
 
-        // --- アップロード関数 (エラー表示強化版) ---
         async function uploadToDrive(file, title) {
-            loadingMsg.style.display = 'block';
-            loadingMsg.style.color = '#f1c40f';
-            loadingMsg.innerText = "認証中...";
+            const msg = document.getElementById('loadingMsg');
+            msg.style.display = 'block';
+            msg.style.color = '#f1c40f';
+            msg.innerText = "認証中...";
 
             tokenClient.callback = async (response) => {
-                if (response.error !== undefined) {
-                    loadingMsg.style.color = 'red';
-                    loadingMsg.innerText = "認証失敗: " + response.error;
+                if (response.error) {
+                    msg.style.color = 'red';
+                    msg.innerText = "認証エラー: " + response.error;
                     return;
                 }
 
-                loadingMsg.innerText = "ファイルを送信中...";
+                msg.innerText = "送信中...";
                 try {
                     const metadata = { name: title, mimeType: file.type };
                     const form = new FormData();
@@ -149,39 +108,28 @@
                         body: form
                     });
 
-                    if (!res.ok) {
-                        const errorData = await res.json();
-                        throw new Error(errorData.error.message || "送信エラー");
-                    }
+                    if (!res.ok) throw new Error("アップロード失敗");
 
                     const fileData = await res.json();
-                    // 動画再生用のURL生成
                     const videoUrl = `https://www.googleapis.com/drive/v3/files/${fileData.id}?alt=media&key=${API_KEY}`;
                     addVideoToList(title, videoUrl);
-                    
-                    loadingMsg.style.color = '#00b894';
-                    loadingMsg.innerText = "完了しました！";
-                    alert('アップロード完了！');
+                    msg.style.color = '#00b894';
+                    msg.innerText = "成功！";
                 } catch (err) {
-                    loadingMsg.style.color = 'red';
-                    loadingMsg.innerText = "エラー: " + err.message;
+                    msg.style.color = 'red';
+                    msg.innerText = "エラー: " + err.message;
                 }
             };
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
 
-        uploadBtn.onclick = () => {
-            const file = fileInput.files[0];
-            const title = titleInput.value;
-            if (!file || !title) {
-                alert("ファイルとタイトルの両方を入力してください");
-                return;
-            }
-            uploadToDrive(file, title);
+        document.getElementById('uploadBtn').onclick = () => {
+            const file = document.getElementById('fileInput').files[0];
+            const title = document.getElementById('titleInput').value;
+            if (file && title) uploadToDrive(file, title);
         };
 
-        // 初期サンプル
-        addVideoToList("サンプル動画 (Big Buck Bunny)", "https://www.w3schools.com/html/mov_bbb.mp4");
+        addVideoToList("サンプル動画", "https://www.w3schools.com/html/mov_bbb.mp4");
     </script>
 </body>
 </html>
